@@ -1,106 +1,145 @@
 package POE::Session::Moose;
-
-use warnings;
-use strict;
-
-=head1 NAME
-
-POE::Session::Moose - The great new POE::Session::Moose!
-
-=head1 VERSION
-
-Version 0.01
-
-=cut
+use 5.010;
+use Moose::Role;
 
 our $VERSION = '0.01';
 
+requires '_start';
+requires '_stop';
 
-=head1 SYNOPSIS
+has heap =>
+(
+    is => 'rw',
+    isa => 'Any'
+);
 
-Quick summary of what the module does.
+has options =>
+(
+    is => 'rw',
+    isa => 'HashRef'
+);
 
-Perhaps a little code snippet.
+has poe =>
+(
+    is => 'ro',
+    isa => 'HashRef',
+    writer => '_set_state_info'
+);
 
-    use POE::Session::Moose;
+has args =>
+(
+    is => 'rw',
+    isa => 'ArrayRef'
+);
 
-    my $foo = POE::Session::Moose->new();
-    ...
+has alias =>
+(
+    is => 'rw',
+    isa => 'Str',
+    trigger => sub { shift; $POE::Kernel::poe_kernel->alias_set(shift); },
+    clearer => '_clear_alias',
+);
 
-=head1 EXPORT
+after 'BUILD' => sub
+{
+    my $self = shift(@_);
+    $POE::Kernel::poe_kernel->session_alloc($self, $self->args());
+};
 
-A list of functions that can be exported.  You can delete this section
-if you don't export anything, such as for a purely object-oriented module.
-
-=head1 FUNCTIONS
-
-=head2 function1
-
-=cut
-
-sub function1 {
+sub clear_alias
+{
+    my $self = shift(@_);
+    $POE::Kernel::poe_kernel->alias_remove($self->alias());
+    $self->_clear_alias();
 }
 
-=head2 function2
+sub _invoke_state
+{
+    my $self    = shift(@_);
+    my $source  = shift(@_); 
+    my $state   = shift(@_);
+    my $etc     = shift(@_); 
+    my $file    = shift(@_); 
+    my $line    = shift(@_); 
+    my $from    = shift(@_);
 
-=cut
+    my $method = $self->meta()->find_method_by_name($state);
 
-sub function2 {
+    if(defined($method))
+    {
+        $self->_set_state_info
+        (
+            {
+                'source'    => $source,
+                'state'     => $state,
+                'file'      => $file,
+                'line'      => $line,
+                'from'      => $from,
+                'kernel'    => $POE::Kernel::poe_kernel,
+            }
+        );
+        
+        return $method->execute($self, @$etc);
+    }
+    else
+    {
+        my $default = $self->meta()->find_method_by_name('default');
+        
+        if(defined($default))
+        {
+            # XXX Debug logging
+            $default->execute($self, $state, @$etc);
+        }
+        else
+        {
+            # XXX Debug logging
+        }
+    }
 }
 
-=head1 AUTHOR
+sub _register_state
+{
+    # only support inline state usage
+    my ($self, $method_name, $coderef) = @_;
+    
+    # XXX Assert $method_name 
 
-Nicholas, C<< <nperez at cpan.org> >>
+    if(!defined($coderef))
+    {
+        # we mean to remove this method
+        $self->meta()->remove_method($method_name);
+    }
+    else
+    {
+        my $method = $self->meta()->find_method_by_name($method_name);
+        
+        if(defined($method))
+        {
+            my $new_method = Class::MOP::Method->wrap
+            (
+                $coderef, 
+                (
+                    name => $method_name,
+                    package_name => $method->package_name()
+                )
+            );
+            
+            $self->meta()->remove_method($method_name);
+            $self->meta()->add_method($method_name, $new_method);
+        }
+        else
+        {
+            # XXX Debug logging
+        }
+    }
 
-=head1 BUGS
+}
 
-Please report any bugs or feature requests to C<bug-poe-session-moose at rt.cpan.org>, or through
-the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=POE-Session-Moose>.  I will be notified, and then you'll
-automatically be notified of progress on your bug as I make changes.
+sub ID
+{
+    $POE::Kernel::poe_kernel->ID_session_to_id(shift);
+}
 
+no Moose::Role;
 
-
-
-=head1 SUPPORT
-
-You can find documentation for this module with the perldoc command.
-
-    perldoc POE::Session::Moose
-
-
-You can also look for information at:
-
-=over 4
-
-=item * RT: CPAN's request tracker
-
-L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=POE-Session-Moose>
-
-=item * AnnoCPAN: Annotated CPAN documentation
-
-L<http://annocpan.org/dist/POE-Session-Moose>
-
-=item * CPAN Ratings
-
-L<http://cpanratings.perl.org/d/POE-Session-Moose>
-
-=item * Search CPAN
-
-L<http://search.cpan.org/dist/POE-Session-Moose/>
-
-=back
-
-
-=head1 ACKNOWLEDGEMENTS
-
-
-=head1 COPYRIGHT & LICENSE
-
-Copyright 2009 Nicholas, all rights reserved.
-
-This program is released under the following license: gpl
-
-
-=cut
-
-1; # End of POE::Session::Moose
+1;

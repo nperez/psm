@@ -1,8 +1,7 @@
 Build.PL
-Changes
+ChangeLog
 MANIFEST
 README
 lib/POE/Session/Moose.pm
 t/00-load.t
-t/pod-coverage.t
-t/pod.t
+t/01-basic.t
