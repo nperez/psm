@@ -40,6 +40,8 @@ has alias =>
     clearer => '_clear_alias',
 );
 
+sub BUILD { 1; }
+
 after 'BUILD' => sub
 {
     my $self = shift(@_);

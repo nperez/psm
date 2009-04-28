@@ -7,8 +7,6 @@ use POE;
     use Moose;
     with 'POE::Session::Moose';
 
-    sub BUILD { 1; }
-    
     sub _start
     {
         my $self = shift(@_);
