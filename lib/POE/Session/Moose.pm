@@ -46,6 +46,23 @@ after 'BUILD' => sub
 {
     my $self = shift(@_);
     $POE::Kernel::poe_kernel->session_alloc($self, $self->args());
+    if($self->options()->{'trace'})
+    {
+        my $meta = $self->meta();
+        foreach my $name ($meta->get_all_method_names())
+        {
+            $meta->add_around_method_modifier
+            (
+                $name, 
+                sub
+                {
+                    my ($orig, $self, $source, $state, $etc, $file, $line, $from) = @_;
+                    POE::Kernel::_warn($self->ID(), " -> $state (from $file at $line)\n" );
+                    return $orig->($self, $source, $state, $etc, $file, $line, $from);
+                }
+            );
+        }
+    }
 };
 
 sub clear_alias
@@ -89,12 +106,17 @@ sub _invoke_state
         
         if(defined($default))
         {
-            # XXX Debug logging
             $default->execute($self, $state, @$etc);
         }
         else
         {
-            # XXX Debug logging
+            my $loggable_self = $POE::Kernel::poe_kernel->_data_alias_loggable($self);
+            POE::Kernel::_warn
+            (
+                "a '$state' event was sent from $file at $line to $loggable_self ",
+                "but $loggable_self has neither a handler for it ",
+                "nor one for _default\n"
+            );
         }
     }
 }
@@ -104,7 +126,7 @@ sub _register_state
     # only support inline state usage
     my ($self, $method_name, $coderef) = @_;
     
-    # XXX Assert $method_name 
+    confess ('$method_name undefined!') unless $method_name;
 
     if(!defined($coderef))
     {
@@ -117,22 +139,19 @@ sub _register_state
         
         if(defined($method))
         {
-            my $new_method = Class::MOP::Method->wrap
-            (
-                $coderef, 
-                (
-                    name => $method_name,
-                    package_name => $method->package_name()
-                )
-            );
-            
             $self->meta()->remove_method($method_name);
-            $self->meta()->add_method($method_name, $new_method);
         }
-        else
-        {
-            # XXX Debug logging
-        }
+
+        my $new_method = Class::MOP::Method->wrap
+        (
+            $coderef, 
+            (
+                name => $method_name,
+                package_name => __PACKAGE__
+            )
+        );
+
+        $self->meta()->add_method($method_name, $new_method);
     }
 
 }
