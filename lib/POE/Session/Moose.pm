@@ -26,9 +26,6 @@ use overload '==' => sub
 
 has orig => ( is => 'rw', isa =>'Str');
 
-requires '_start';
-requires '_stop';
-
 subtype Kernel 
     => as 'POE::Kernel';
 
@@ -61,12 +58,41 @@ has poe =>
     {
         my $class = class 
         {
-            has sender  => ( is => 'rw', isa => 'Kernel | Session | CanDoSession'  );
-            has state   => ( is => 'rw', isa => 'Str' );
-            has file    => ( is => 'rw', isa => 'Str | Undef' );
-            has line    => ( is => 'rw', isa => 'Str | Undef' );
-            has from    => ( is => 'rw', isa => 'Str | Undef' );
-            has kernel  => ( is => 'rw', isa => 'Kernel' );
+            has sender  => ( is => 'rw', isa => 'Kernel | Session | CanDoSession', clearer => 'clear_sender'  );
+            has state   => ( is => 'rw', isa => 'Str', clearer => 'clear_state' );
+            has file    => ( is => 'rw', isa => 'Maybe[Str]', clearer => 'clear_file' );
+            has line    => ( is => 'rw', isa => 'Maybe[Str]', clearer => 'clear_line' );
+            has from    => ( is => 'rw', isa => 'Maybe[Str]', clearer => 'clear_from' );
+            has kernel  => ( is => 'rw', isa => 'Kernel', clearer => 'clear_kernel' );
+
+            sub clear
+            {
+                my $self = shift;
+                $self->clear_sender;
+                $self->clear_state;
+                $self->clear_file;
+                $self->clear_line;
+                $self->clear_from;
+                $self->clear_kernel;
+            }
+
+            sub restore
+            {
+                my $self = shift;
+                my $poe = shift;
+                $self->sender($poe->sender);
+                $self->state($poe->state);
+                $self->file($poe->file);
+                $self->line($poe->line);
+                $self->from($poe->from);
+                $self->kernel($poe->kernel);
+            }
+
+            sub clone
+            {
+                my $self = shift;
+                return $self->meta->clone_object($self);
+            }
         };
 
         $class->new_object({});
@@ -86,7 +112,13 @@ has alias =>
 (
     is => 'rw',
     isa => 'Str',
-    trigger => sub { shift; $POE::Kernel::poe_kernel->alias_set(shift); },
+    trigger => sub 
+    { 
+        my ($self, $val) = (shift, shift);
+        # we need to check to make sure we are currently in a POE context
+        return if not defined($self->poe->kernel);
+        $POE::Kernel::poe_kernel->alias_set($val); 
+    },
     clearer => '_clear_alias',
 );
 
@@ -98,46 +130,99 @@ has ID =>
     lazy => 1,
 );
 
+# this just stores the anonymous clone class we create for our instance
 has _self_meta =>
 (
     is => 'rw',
     isa => 'Class::MOP::Class'
 );
 
+# add some sugar for posting, yielding, and calling events
+sub post
+{
+    my ($self, $session, $event, @args) = @_;
+    confess('No POE context') if not defined($self->poe->kernel);
+    return $self->poe->kernel->post($session, $event, @args);
+}
+
+sub yield
+{
+    my ($self, $event, @args) = @_;
+    confess('No POE context') if not defined($self->poe->kernel);
+    return $self->poe->kernel->yield($event, @args);
+}
+
+sub call
+{
+    my ($self, $session, $event, @args) = @_;
+    confess('No POE context') if not defined($self->poe->kernel);
+    return $self->poe->kernel->call($session, $event, @args);
+}
+
+# some defaults for _start, _stop and _default
+sub _start
+{
+    my $self = shift;
+    if($self->alias)
+    {
+        # inside a poe context now, so fire the trigger
+        $self->alias($self->alias);
+    }
+}
+
+sub _stop 
+{ 
+    my $self = shift;
+    $self->clear_alias();
+}
+
+sub _default 
+{
+    my ($self, $state) = @_;
+    my $string = $self->alias // $self;
+    warn "Event nonexistent '$state' delivered to $string";
+}
+
 sub BUILD { 1; }
 
 after 'BUILD' => sub
 {
     my $self = shift(@_);
-    # This is to enable overload in the consumer class
+    
+    #enable overload in the composed class (ripped from overload.pm)
     {
         no strict 'refs';
         no warnings 'redefine';
-        $ {$self->meta->name . "::OVERLOAD"}{dummy}++;
+        ${$self->meta->name . "::OVERLOAD"}{dummy}++;
         *{$self->meta->name . "::()"} = sub {};
     }
-
-    #this registers us with the POE::Kernel
-    $POE::Kernel::poe_kernel->session_alloc($self, $self->args());
+    
+    # we need a no-op bless here to activate the magic for overload
+    bless ({}, $self->meta->name);
 
     if($self->options()->{'trace'})
     {
         $self = $self->_clone_self();
         my $meta = $self->meta();
-        #warn "BUILD: \n".$meta->dump(2);
+        
         foreach my $name ($meta->get_all_method_names)
         {
             # This is a hack, there has to be a better moose idiom for this
+            
+            # Check to see if this method name is actually an attribute.
+            # We don't want to trace attribute calls
             if ($meta->has_attribute($name))
             {
                 next;
             }
-            if ($name =~ /BUILD|DOES|_invoke_state|clear_alias|_register_state|meta|does|new|DESTROY|DEMOLISHALL|_clone_self|\(/)
+
+            # also weed out any of the non-event methods
+            if ($name =~ /post|yield|call|BUILD|DOES|_invoke_state|clear_alias|_register_state|meta|does|new|DESTROY|DEMOLISHALL|_clone_self|\(/)
             {
                 next;
             }
-            my $meta_name = $meta->name;
-            #warn "METHOD: $meta_name => $self -> $name";
+            
+            # we have to use 'around' to gain access to the arguments
             $meta->add_around_method_modifier
             (
                 $name, 
@@ -157,6 +242,9 @@ after 'BUILD' => sub
             );
         }
     }
+    
+    #this registers us with the POE::Kernel
+    $POE::Kernel::poe_kernel->session_alloc($self, @{$self->args()});
 };
 
 sub clear_alias
@@ -181,6 +269,13 @@ sub _invoke_state
     if(defined($method))
     {
         my $poe = $self->poe();
+
+        my $saved;
+        if(defined($poe->kernel))
+        {
+            $saved = $poe->clone();
+        }
+        
         $poe->sender($sender);
         $poe->state($state);
         $poe->file($file);
@@ -188,15 +283,26 @@ sub _invoke_state
         $poe->from($from);
         $poe->kernel($POE::Kernel::poe_kernel);
         
-        return $method->execute($self, @$etc);
+        my $return = $method->execute($self, @$etc);
+        $poe->clear();
+        $poe->restore($saved) if defined $saved;
+        return $return;
+        
     }
     else
     {
-        my $default = $self->meta()->find_method_by_name('default');
+        my $default = $self->meta()->find_method_by_name('_default');
         
         if(defined($default))
         {
             my $poe = $self->poe();
+
+            my $saved;
+            if(defined($poe->kernel))
+            {
+                $saved = $poe->clone();
+            }
+            
             $poe->sender($sender);
             $poe->state($state);
             $poe->file($file);
@@ -204,12 +310,15 @@ sub _invoke_state
             $poe->from($from);
             $poe->kernel($POE::Kernel::poe_kernel);
             
-            return $default->execute($self, $state, @$etc);
+            my $return = $default->execute($self, $state, @$etc);
+            $poe->clear();
+            $poe->restore($saved) if defined $saved;
+            return $return;
         }
         else
         {
+            # this idiom was taken from POE::Session
             my $loggable_self = $POE::Kernel::poe_kernel->_data_alias_loggable($self);
-            #warn $self->meta()->dump(2);
             POE::Kernel::_warn
             (
                 "a '$state' event was sent from $file at $line to $loggable_self ",
@@ -222,7 +331,6 @@ sub _invoke_state
 
 sub _register_state
 {
-    #warn "REGISTER STATE";
     # only support inline state usage
     my ($self, $method_name, $coderef) = @_;
     
@@ -237,6 +345,7 @@ sub _register_state
     }
     else
     {
+        # otherwise, it is either replace it or add it
         my $method = $self->meta()->find_method_by_name($method_name);
         
         if(defined($method))
@@ -254,7 +363,8 @@ sub _register_state
         );
 
         $self->meta()->add_method($method_name, $new_method);
-
+        
+        # enable tracing on the added method if tracing is enabled
         if($self->options()->{'trace'})
         {
             my $meta = $self->meta();
@@ -264,7 +374,7 @@ sub _register_state
                 sub
                 {
                     my ($orig, $self, @etc) = @_;
-
+                    
                     my $poe = $self->poe();
                     my $state = $poe->state();
                     my $file = $poe->file();
@@ -281,12 +391,9 @@ sub _register_state
 
 sub _clone_self
 {
-    use Data::Dumper;
     my $self = shift;
     
     my $meta = $self->meta();
-    #warn Dumper($meta->get_all_methods);
-    #warn Dumper({ map { $_->name => $_->body  } $meta->get_all_methods });
     my $anon = Moose::Meta::Class->create_anon_class
     (   
         superclasses => [ $meta->superclasses() ],
@@ -294,23 +401,31 @@ sub _clone_self
         attributes => [ $meta->get_all_attributes() ],
         roles => [ map { $_->name } $meta->calculate_all_roles() ] ,
     );
-
+    
+    # we need to hold on to the original stringification
     my $orig = "$self";
+    
+    #enable overload in the anonymous class (ripped from overload.pm)
     {
         no strict 'refs';
         no warnings 'redefine';
         ${$anon->name . "::OVERLOAD"}{dummy}++;
         *{$anon->name . "::()"} = sub {};
     }
+
+    # this bless not only reblesses into the anonymous class, but also activates overload
     bless($self, $anon->name);
     
-    if($orig !~ /__ANON__/)
+    # we only want to store the original class stringification to fool POE
+    if(!defined($self->orig))
     {
         $self->orig($orig);
     }
-
+    
+    # and to keep our anonymous class from going out of scope, stash a reference into ourselves
     $self->_self_meta($anon);
 
+    # And here is where we break POE encapsulation
     $POE::Kernel::poe_kernel->[POE::Kernel::KR_SESSIONS]->{$orig}->[POE::Kernel::SS_SESSION] = $self;
     
     return $self;
