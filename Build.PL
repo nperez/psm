@@ -7,12 +7,13 @@ my $builder = Module::Build->new(
     license             => 'gpl',
     dist_author         => 'Nicholas R. Perez <nperez@cpan.org>',
     dist_version_from   => 'lib/POE/Session/Moose.pm',
+    dist_abstract       => 'A POE::Session implementation as a Moose::Role',
     create_readme       => 1,
     meta => 
     {
         resources =>
         {
-            repository => 'http://github.com/'
+            repository => 'git://nickandperla.net/psm.git/'
         }
     },
     build_requires => 
@@ -23,7 +24,6 @@ my $builder = Module::Build->new(
         'MooseX::Declare'   => 0.10,
     },
     add_to_cleanup      => [ 'POE-Session-Moose-*' ],
-    create_makefile_pl => 'traditional',
 );
 
 $builder->create_build_script();
