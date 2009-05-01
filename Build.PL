@@ -17,9 +17,10 @@ my $builder = Module::Build->new(
     },
     build_requires => 
     {
-        'Test::More'    => 0,
-        'POE'           => 1.004,
-        'Moose'         => 0.75
+        'Test::More'        => 0,
+        'POE'               => 1.004,
+        'Moose'             => 0.75,
+        'MooseX::Declare'   => 0.10,
     },
     add_to_cleanup      => [ 'POE-Session-Moose-*' ],
     create_makefile_pl => 'traditional',
