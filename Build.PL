@@ -3,10 +3,10 @@ use warnings;
 use Module::Build;
 
 my $builder = Module::Build->new(
-    module_name         => 'POE::Session::Moose',
+    module_name         => 'POEx::Role::SessionInstantiation',
     license             => 'gpl',
     dist_author         => 'Nicholas R. Perez <nperez@cpan.org>',
-    dist_version_from   => 'lib/POE/Session/Moose.pm',
+    dist_version_from   => 'lib/POEx/Role/SessionInstantiation.pm',
     dist_abstract       => 'A POE::Session implementation as a Moose::Role',
     create_readme       => 1,
     meta => 
@@ -20,7 +20,6 @@ my $builder = Module::Build->new(
     {
         'Test::More'        => 0,
         'POE'               => 1.004,
-        'Moose'             => 0.75,
         'MooseX::Declare'   => 0.10,
     },
     add_to_cleanup      => [ 'POE-Session-Moose-*' ],

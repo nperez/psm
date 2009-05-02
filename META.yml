@@ -1,5 +1,5 @@
 ---
-name: POE-Session-Moose
+name: POEx-Role-SessionInstantiation
 version: 0.01
 author:
   - 'Nicholas R. Perez <nperez@cpan.org>'
@@ -8,13 +8,12 @@ license: gpl
 resources:
   license: http://opensource.org/licenses/gpl-license.php
 build_requires:
-  Moose: 0.75
   MooseX::Declare: 0.1
   POE: 1.004
   Test::More: 0
 provides:
-  POE::Session::Moose:
-    file: lib/POE/Session/Moose.pm
+  POEx::Role::SessionInstantiation:
+    file: lib/POEx/Role/SessionInstantiation.pm
     version: 0.01
 generated_by: Module::Build version 0.280801
 meta-spec:

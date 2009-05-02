@@ -8,7 +8,7 @@ my $test = 0;
     use 5.010;
     use Moose;
     use MooseX::Declare;
-    with 'POE::Session::Moose';
+    with 'POEx::Role::SessionInstantiation';
 
     use Data::Dumper;
     $Data::Dumper::Maxdepth = 2;
@@ -42,12 +42,12 @@ my $test = 0;
                     Test::More::pass('bar called');
                     
                     # create a named class instantiated object and post to it
-                    class My::SubSession with POE::Session::Moose { sub blat { Test::More::pass('blat called'); shift->poe->kernel->detach_myself(); } }
+                    class My::SubSession with POEx::Role::SessionInstantiation { sub blat { Test::More::pass('blat called'); shift->poe->kernel->detach_myself(); } }
                     My::SubSession->new({ options => { 'trace' => 1 }, alias => 'blat_alias' });
                     $self->post('blat_alias', 'blat');
                     
                     # now do the same but anonymous
-                    my $class = class with POE::Session::Moose { sub flarg { Test::More::pass('flarg called'); shift->poe->kernel->detach_myself(); } };
+                    my $class = class with POEx::Role::SessionInstantiation { sub flarg { Test::More::pass('flarg called'); shift->poe->kernel->detach_myself(); } };
                     my $obj = $class->name->new({ options => { 'trace' => 1 }, alias => 'flarg_anon_alias' });
                     $self->post('flarg_anon_alias', 'flarg');
                 }

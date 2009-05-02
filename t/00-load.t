@@ -3,7 +3,7 @@
 use Test::More tests => 1;
 
 BEGIN {
-	use_ok( 'POE::Session::Moose' );
+	use_ok( 'POEx::Role::SessionInstantiation' );
 }
 
-diag( "Testing POE::Session::Moose $POE::Session::Moose::VERSION, Perl $], $^X" );
+diag( "Testing POEx::Role::SessionInstantiation $POEx::Role::SessionInstantiation::VERSION, Perl $], $^X" );

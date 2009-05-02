@@ -1,4 +1,4 @@
-package POE::Session::Moose;
+package POEx::Role::SessionInstantiation;
 use 5.010;
 use Moose::Role;
 use MooseX::Declare;
@@ -34,7 +34,7 @@ subtype Session
 
 subtype CanDoSession
     => as 'Object',
-    => where { $_->does('POE::Session::Moose') };
+    => where { $_->does(__PACKAGE__) };
 
 has heap =>
 (
