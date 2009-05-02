@@ -13,7 +13,7 @@ my $builder = Module::Build->new(
     {
         resources =>
         {
-            repository => 'git://nickandperla.net/psm.git/'
+            repository => 'git://nickandperla.net/pxrsi.git/'
         }
     },
     build_requires => 
