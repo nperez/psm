@@ -434,4 +434,82 @@ sub _clone_self
 
 no Moose::Role;
 
+=pod
+
+=head1 NAME
+
+POEx::Role::SessionInstantiation - A Moose::Role for plain old Perl objects in 
+a POE context
+
+=head1 SYOPSIS
+
+    package My::Class;
+    use 5.010;
+    use MooseX::Declare;
+    
+    # using the role instantly makes it a POE::Session upon instantiation
+    class My::Class with POEx::Role::SessionInstantiation
+    {
+        # declared methods are all exposed as events to POE
+        sub foo
+        {
+            my ($self, @args) = @_;
+            
+            # This event is not only added through POE but also added as a 
+            # method to each instance that happens to have 'foo' fired
+
+            # Access to POE information is done through the 'poe' accessor
+            $self->poe->kernel->state
+            (
+                'added_event',
+                sub
+                {
+                    say 'added_event has fired'
+                }
+            );
+            
+            # Some sugar to access the kernel's yield method
+            # This will push the 'bar' method into POE's event queue
+            $self->yield('bar');
+        }
+
+        sub bar
+        {
+            my ($self, @args) = @_;
+
+            # $self is also safe to pass as a session reference
+            # Or you can pass along $self->ID()
+            $self->post($self, 'baz')
+        }
+
+        sub baz
+        {
+            my ($self, @args) = @_;
+
+            # call also works too
+            $self->call($self, 'added_event';
+        }
+    }
+
+    1;
+    
+    # Constructing the session takes all the normal options
+    my $session = My::Class->new({ options => { trace => 1 } });
+
+    # Still need to call ->run();
+    POE::Kernel->run();
+
+=head1 DESCRIPTION
+
+POEx::Role::SessionInstantiation provides a nearly seamless integration for 
+non-POE objects into a POE environment. It does this by handling the POE stuff
+behind the scenes including allowing per instances method changes, session 
+registration to the Kernel, and providing some defaults like setting an alias
+if supplied via the attribute or constructor argument, or defining a _default
+that warns if your object receives and event that it does not have.
+
+
+
+=cut
+
 1;
