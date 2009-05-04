@@ -74,8 +74,8 @@ my $test = 0;
 
     sub _default
     {
-        my ($self, $state) = (shift, shift);
-        given($state)
+        my ($self) = (shift);
+        given($self->poe->state)
         {
             when('foo') { Test::More::pass('default redirect foo'); }
             when('bar') { Test::More::pass('default redirect bar'); }
