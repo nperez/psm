@@ -7,6 +7,7 @@ abstract: A POE::Session implementation as a Moose::Role
 license: gpl
 resources:
   license: http://opensource.org/licenses/gpl-license.php
+  repository: git://nickandperla.net/pxrsi.git/
 build_requires:
   MooseX::Declare: 0.2
   POE: 1.005

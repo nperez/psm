@@ -9,7 +9,7 @@ my $builder = Module::Build->new(
     dist_version_from   => 'lib/POEx/Role/SessionInstantiation.pm',
     dist_abstract       => 'A POE::Session implementation as a Moose::Role',
     create_readme       => 1,
-    meta => 
+    meta_merge => 
     {
         resources =>
         {
