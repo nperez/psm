@@ -19,8 +19,8 @@ my $builder = Module::Build->new(
     build_requires => 
     {
         'Test::More'        => 0,
-        'POE'               => 1.004,
-        'MooseX::Declare'   => 0.10,
+        'POE'               => 1.005,
+        'MooseX::Declare'   => 0.20,
     },
     add_to_cleanup      => [ 'POE-Session-Moose-*' ],
 );

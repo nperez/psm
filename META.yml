@@ -8,14 +8,14 @@ license: gpl
 resources:
   license: http://opensource.org/licenses/gpl-license.php
 build_requires:
-  MooseX::Declare: 0.1
-  POE: 1.004
+  MooseX::Declare: 0.2
+  POE: 1.005
   Test::More: 0
 provides:
   POEx::Role::SessionInstantiation:
     file: lib/POEx/Role/SessionInstantiation.pm
     version: 0.01
-generated_by: Module::Build version 0.280801
+generated_by: Module::Build version 0.33
 meta-spec:
-  url: http://module-build.sourceforge.net/META-spec-v1.2.html
-  version: 1.2
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
