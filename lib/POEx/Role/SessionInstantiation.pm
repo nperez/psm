@@ -314,7 +314,7 @@ These are provided as sugar for the respective POE::Kernel methods.
         confess('No POE context') if not defined($self->poe->kernel);
         return $self->poe->kernel->call($session, $event_name, @args);
     }
-=method _start
+=method _start(@args)
 
 Provides a default _start event handler that will be invoked from POE once the
 Session is registered with POE. The default method only takes the alias 
@@ -331,9 +331,10 @@ don't forget to set the alias again so the trigger can execute.
             # inside a poe context now, so fire the trigger
             $self->alias($self->alias);
         }
+        1;
     }
 
-=method _stop
+=method _stop()
 
 Provides a default _stop event handler that will be invoked from POE once the 
 Session's refcount from within POE has reached zero (no pending events, no
@@ -343,24 +344,50 @@ event sources, etc). The default method merely clears out the alias.
     method _stop() is Event
     { 
         $self->clear_alias();
+        1;
     }
 
-=method _default
+=method _default(ArrayRef $args)
 
 Provides a _default event handler to catch any POE event invocations that your
 instance does not actually have. Will 'warn' about the nonexistent state. A big
 difference from POE::Session is that the state and arguments are not rebundled 
 upon invocation of this event handler. Instead the attempted state will be
-available in the poe attribute and the arguments will be pass normally as an
-array.
+available in the poe attribute, but the arguments are still bundled into a 
+single ArrayRef
 
 =cut
 
-    method _default(@args) is Event
+    method _default(ArrayRef $args?) is Event
     {
         my $string = $self->alias // $self->ID;
         my $state = $self->poe->state;
         warn "Nonexistent '$state' event delivered to $string";
+    }
+
+=method _child(Str $event, Session $child, Any $ret?)
+
+Provides a _child event handler that will be invoked when child sesssions are
+created, destroyed or reassigned to or from another parent. See POE::Kernel for
+more details on this event and its semantics
+
+=cut
+
+    method _child(Str $event, Session|DoesSessionInstantiation $child, Any $ret?) is Event
+    {
+        1;
+    }
+
+=method _parent(Session $previous_parent, Session $new_parent)
+
+Provides a _parent event handler. This is used to notify children session when
+their parent has changes. See POE::Kernel for more details on this event.
+
+=cut
+
+    method _parent(Session|DoesSessionInstantiation $previous_parent, Session|DoesSessionInstantiation $new_parent) is Event
+    {
+        1;
     }
 
     sub BUILD { 1; }
@@ -401,9 +428,20 @@ is executed.
 
         if(defined($method))
         {
-            if(!$method->meta->isa('Moose::Meta::Class') || !$method->meta->does_role('POEx::Role::Event'))
+            if($method->isa('Class::MOP::Method::Wrapped'))
             {
-                POE::Kernel::_warn($self->ID, " -> $state, called (from $file at $line), exists, but is not marked as an available event");
+                my $orig = $method->get_original_method;
+                if(!$orig->meta->isa('Moose::Meta::Class') || !$orig->meta->does_role('POEx::Role::Event'))
+                {
+                    POE::Kernel::_warn($self->ID, " -> $state [WRAPPED], called from $file at $line, exists, but is not marked as an available event");
+                    return;
+                }
+
+            }
+            elsif(!$method->meta->isa('Moose::Meta::Class') || !$method->meta->does_role('POEx::Role::Event'))
+            {
+                warn $method->meta->dump(2);
+                POE::Kernel::_warn($self->ID, " -> $state, called from $file at $line, exists, but is not marked as an available event");
                 return;
             }
 
@@ -437,9 +475,18 @@ is executed.
 
             if(defined($default))
             {
-                if(!$default->meta->isa('Moose::Meta::Class') || !$default->meta->does_role('POEx::Role::Event'))
+                if($default->meta->isa('Class::MOP::Method::Wrapped'))
                 {
-                    POE::Kernel::_warn($self->ID, " -> $state, called (from $file at $line), exists, but is not marked as an available event");
+                    my $orig = $default->get_original_default;
+                    if(!$orig->meta->isa('Moose::Meta::Class') || !$orig->meta->does_role('POEx::Role::Event'))
+                    {
+                        POE::Kernel::_warn($self->ID, " -> $state [WRAPPED], called from $file at $line, exists, but is not marked as an available event");
+                        return;
+                    }
+                }
+                elsif(!$default->meta->isa('Moose::Meta::Class') || !$default->meta->does_role('POEx::Role::Event'))
+                {
+                    POE::Kernel::_warn($self->ID, " -> $state, called from $file at $line, exists, but is not marked as an available event");
                     return;
                 }
                 my $poe = $self->poe();
@@ -456,8 +503,8 @@ is executed.
                 $poe->line($line);
                 $poe->from($from);
                 $poe->kernel($POE::Kernel::poe_kernel);
-
-                my $return = $default->execute($self, @$etc);
+                
+                my $return = $default->execute($self, $etc);
                 $poe->clear();
                 $poe->restore($saved) if defined $saved;
                 return $return;
@@ -477,11 +524,6 @@ is executed.
 
     method _register_state (Str $method_name, CodeRef|MooseX::Method::Signatures::Meta::Method $coderef?, Str $ignore?)
     {
-        # horrible hack to make sure wheel states get called how they want to be called
-        if($method_name =~ /POE::Wheel/)
-        {
-            $coderef = $self->_wheel_wrap_method($coderef);
-        }
         
         # per instance changes
         $self = $self->_clone_self();
@@ -493,6 +535,11 @@ is executed.
         }
         else
         {
+            # horrible hack to make sure wheel states get called how they want to be called
+            if($method_name =~ /POE::Wheel/)
+            {
+                $coderef = $self->_wheel_wrap_method($coderef);
+            }
             # otherwise, it is either replace it or add it
             my $method = $self->meta()->find_method_by_name($method_name);
 
@@ -501,15 +548,24 @@ is executed.
                 $self->meta()->remove_method($method_name);
             }
             
-            my $new_method;
+            my ($new_method, $superclass);
 
             if(blessed($coderef) && $coderef->isa('MooseX::Method::Signatures::Meta::Method'))
             {
                 $new_method = $coderef;
+                $superclass = 'MooseX::Method::Signatures::Meta::Method';
+                
+                if($new_method->isa('Moose::Meta::Class') && $new_method->does_role(Event))
+                {
+                    $self->meta->add_method($method_name, $new_method);
+                    return;
+                }
+
             }
             else
             {
-                $new_method = Class::MOP::Method->wrap
+                $superclass = 'Moose::Meta::Method';
+                $new_method = Moose::Meta::Method->wrap
                 (
                     $coderef, 
                     (
@@ -519,8 +575,15 @@ is executed.
                 );
             }
             
-            Event->meta->apply($new_method);
-            
+            my $anon = Moose::Meta::Class->create_anon_class
+            (
+                superclasses => [ $superclass ],
+                roles => [ Event ],
+                cache => 1,
+            );
+
+            bless($new_method, $anon->name);
+ 
             $self->meta->add_method($method_name, $new_method);
 
         }

@@ -1,4 +1,4 @@
-use Test::More('tests', 11);
+use Test::More('tests', 13);
 use POE;
 use MooseX::Declare;
 
@@ -16,12 +16,12 @@ class My::Session with POEx::Role::SessionInstantiation
         $self->yield('foo');
     }
 
-    method _stop() is Event
+    method _stop is Event
     {
         Test::More::pass('Stop called');
     }
 
-    method foo() is Event
+    method foo is Event
     {
         Test::More::pass('foo called');
         if($test == 0)
@@ -36,7 +36,11 @@ class My::Session with POEx::Role::SessionInstantiation
                     class Foo with POEx::Role::SessionInstantiation 
                     { 
                         use aliased 'POEx::Role::Event'; 
-                        method blat() is Event 
+                        after _start is Event 
+                        { 
+                            Test::More::pass('after _start called'); 
+                        } 
+                        method blat is Event 
                         { 
                             Test::More::pass('blat called'); 
                         } 
@@ -48,10 +52,14 @@ class My::Session with POEx::Role::SessionInstantiation
                     class Bar with POEx::Role::SessionInstantiation 
                     { 
                         use aliased 'POEx::Role::Event'; 
-                        method flarg() is Event 
+                        method flarg is Event 
                         { 
                             Test::More::pass('flarg called'); 
                         } 
+                        before _stop is Event
+                        {
+                            Test::More::pass('before _stop called');
+                        }
                     }
 
                     Bar->new( options => { 'trace' => 1 }, alias => 'flarg_alias' );

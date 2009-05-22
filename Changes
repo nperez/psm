@@ -5,6 +5,7 @@ Revision history for {{ $dist->name }} {{ $dist->version }}
         Throw away method heuristics in exchange for declarative method traits
         Redo dist using Dist::Zilla
         Redo POD to use PodPurler
+        Advice now works on methods declared as events
 
 0.01    2009-05-05
         Initial release
