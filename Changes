@@ -1,0 +1,10 @@
+Revision history for {{ $dist->name }} {{ $dist->version }}
+
+{{ $NEXT }}
+        Redo tracing to now be a simple if statement before invocation
+        Throw away method heuristics in exchange for declarative method traits
+        Redo dist using Dist::Zilla
+        Redo POD to use PodPurler
+
+0.01    2009-05-05
+        Initial release

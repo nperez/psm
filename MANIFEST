@@ -1,8 +1,0 @@
-Build.PL
-ChangeLog
-MANIFEST
-README
-lib/POEx/Role/SessionInstantiation.pm
-t/00-load.t
-t/01-basic.t
-META.yml
