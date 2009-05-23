@@ -59,43 +59,6 @@ use MooseX::Declare;
 
 =cut
 
-class _poeCONTEXT
-{
-    use POEx::Types(':all');
-    use MooseX::Types::Moose('Maybe', 'Str');
-    has sender  => ( is => 'rw', isa => Kernel|Session|DoesSessionInstantiation, clearer => 'clear_sender'  );
-    has state   => ( is => 'rw', isa => Str, clearer => 'clear_state' );
-    has file    => ( is => 'rw', isa => Maybe[Str], clearer => 'clear_file' );
-    has line    => ( is => 'rw', isa => Maybe[Str], clearer => 'clear_line' );
-    has from    => ( is => 'rw', isa => Maybe[Str], clearer => 'clear_from' );
-    has kernel  => ( is => 'rw', isa => Kernel, clearer => 'clear_kernel' );
-
-    method clear
-    {
-        $self->clear_sender;
-        $self->clear_state;
-        $self->clear_file;
-        $self->clear_line;
-        $self->clear_from;
-        $self->clear_kernel;
-    }
-
-    method restore (Object $poe)
-    {
-        $self->sender($poe->sender);
-        $self->state($poe->state);
-        $self->file($poe->file);
-        $self->line($poe->line);
-        $self->from($poe->from);
-        $self->kernel($poe->kernel);
-    }
-
-    method clone
-    {
-        return $self->meta->clone_object($self);
-    }
-}
-
 role POEx::Role::SessionInstantiation
 {
     use MooseX::Types::Moose('Str', 'Int', 'Any', 'HashRef', 'Object', 'ArrayRef', 'Maybe');
@@ -217,13 +180,52 @@ This will clone the current anonymous poe object and return it.
     has poe =>
     (
         is => 'ro',
-        isa => '_poeCONTEXT',
-        default => sub
-        {
-            _poeCONTEXT->new();
-        },
-        lazy => 1
+        isa => Object,
+        lazy_build => 1,
     );
+
+    sub _build_poe
+    {
+        state $poe_class = class 
+        {
+            use POEx::Types(':all');
+            use MooseX::Types::Moose('Maybe', 'Str');
+
+            has sender  => ( is => 'rw', isa => Kernel|Session|DoesSessionInstantiation, clearer => 'clear_sender'  );
+            has state   => ( is => 'rw', isa => Str, clearer => 'clear_state' );
+            has file    => ( is => 'rw', isa => Maybe[Str], clearer => 'clear_file' );
+            has line    => ( is => 'rw', isa => Maybe[Str], clearer => 'clear_line' );
+            has from    => ( is => 'rw', isa => Maybe[Str], clearer => 'clear_from' );
+            has kernel  => ( is => 'rw', isa => Kernel, clearer => 'clear_kernel' );
+
+            method clear
+            {
+                $self->clear_sender;
+                $self->clear_state;
+                $self->clear_file;
+                $self->clear_line;
+                $self->clear_from;
+                $self->clear_kernel;
+            }
+
+            method restore (Object $poe)
+            {
+                $self->sender($poe->sender);
+                $self->state($poe->state);
+                $self->file($poe->file);
+                $self->line($poe->line);
+                $self->from($poe->from);
+                $self->kernel($poe->kernel);
+            }
+
+            method clone
+            {
+                return $self->meta->clone_object($self);
+            }
+        };
+
+        return $poe_class->name->new();
+    }
 
 =attr args is: rw, isa: ArrayRef, default: [], lazy: yes
 
@@ -314,6 +316,7 @@ These are provided as sugar for the respective POE::Kernel methods.
         confess('No POE context') if not defined($self->poe->kernel);
         return $self->poe->kernel->call($session, $event_name, @args);
     }
+
 =method _start(@args)
 
 Provides a default _start event handler that will be invoked from POE once the
@@ -411,9 +414,10 @@ is executed.
 
         # we need a no-op bless here to activate the magic for overload
         bless ({}, $self->meta->name);
-
+        
         #this registers us with the POE::Kernel
-        $POE::Kernel::poe_kernel->session_alloc($self, @{$self->args()});
+        $POE::Kernel::poe_kernel->session_alloc($self, @{$self->args()})
+            if not $self->orig;
     };
 
     method clear_alias
@@ -593,9 +597,8 @@ is executed.
     # Note: this is a horrible hack.
     method _wheel_wrap_method (CodeRef|MooseX::Method::Signatures::Meta::Method $ref)
     {
-        return sub
+        sub ($obj)
         {
-            my $obj = shift;
             my $poe = $obj->poe;
             my @args;
             (
@@ -617,6 +620,16 @@ is executed.
 
     method _clone_self
     {
+        # we only need to clone once
+        if($self->orig)
+        {
+            return $self;
+        }
+
+        # we need to hold on to the original stringification
+        my $orig = "$self";
+        $self->orig($orig);
+
         my $meta = $self->meta();
         my $anon = Moose::Meta::Class->create_anon_class
         (   
@@ -625,9 +638,6 @@ is executed.
             attributes => [ $meta->get_all_attributes() ],
             roles => [ map { $_->name } @{$meta->roles} ],
         );
-
-        # we need to hold on to the original stringification
-        my $orig = "$self";
 
         #enable overload in the anonymous class (ripped from overload.pm)
         {
@@ -640,12 +650,6 @@ is executed.
         # this bless not only reblesses into the anonymous class, but also activates overload
         bless($self, $anon->name);
 
-        # we only want to store the original class stringification to fool POE
-        if(!defined($self->orig))
-        {
-            $self->orig($orig);
-        }
-
         # and to keep our anonymous class from going out of scope, stash a reference into ourselves
         $self->_self_meta($anon);
 
@@ -655,6 +659,7 @@ is executed.
         return $self;
     }
 }
+
 
 1;
 

@@ -9,16 +9,15 @@ class My::Session with POEx::Role::SessionInstantiation
     use 5.010;
     use aliased 'POEx::Role::Event';
 
-    method _start(Str $alias) is Event
-    {
-        Test::More::pass('Start called');
-        $self->alias($alias);
-        $self->yield('foo');
-    }
-
     method _stop is Event
     {
         Test::More::pass('Stop called');
+    }
+    
+    after _start(@args) is Event
+    {
+        Test::More::pass('Start called');
+        $self->yield('foo');
     }
 
     method foo is Event
@@ -94,8 +93,6 @@ class My::Session with POEx::Role::SessionInstantiation
             when('bar') { Test::More::pass('default redirect bar'); }
         }
     }
-
-    1;
 }
 
 my $sess = My::Session->new( options => { 'trace' => 1 }, args => [ 'test0' ]);
