@@ -597,8 +597,9 @@ is executed.
     # Note: this is a horrible hack.
     method _wheel_wrap_method (CodeRef|MooseX::Method::Signatures::Meta::Method $ref)
     {
-        sub ($obj)
+        sub
         {
+            my $obj = shift;
             my $poe = $obj->poe;
             my @args;
             (
@@ -611,10 +612,20 @@ is executed.
                 $args[6], 
                 $args[CALLER_FILE], 
                 $args[CALLER_LINE], 
-                $args[CALLER_STATE]
-            ) = ($obj, $obj, $poe->kernel, $obj->heap, $poe->state, $poe->sender, undef, $poe->file, $poe->line, $poe->from);
+                $args[CALLER_STATE],
+                $args[ARG0],
+                $args[ARG1],
+                $args[ARG2],
+                $args[ARG3],
+                $args[ARG4],
+                $args[ARG5],
+                $args[ARG6],
+                $args[ARG7],
+                $args[ARG8],
+                $args[ARG9],
+            ) = ($obj, $obj, $poe->kernel, $obj->heap, $poe->state, $poe->sender, undef, $poe->file, $poe->line, $poe->from, @_);
 
-            return $ref->(@args, @_);
+            return $ref->(@args);
         }
     }
 
@@ -636,9 +647,10 @@ is executed.
             superclasses => [ $meta->superclasses() ],
             methods => { map { $_->name,  $_  } $meta->get_all_methods },
             attributes => [ $meta->get_all_attributes() ],
-            roles => [ map { $_->name } @{$meta->roles} ],
         );
-
+        
+        $anon->add_role($_) for @{$meta->roles};
+        
         #enable overload in the anonymous class (ripped from overload.pm)
         {
             no strict 'refs';
