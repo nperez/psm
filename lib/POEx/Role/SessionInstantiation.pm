@@ -86,7 +86,9 @@ role POEx::Role::SessionInstantiation
         return "$_[0]" eq "$_[1]";
     };
 
-    has orig => ( is => 'rw', isa => Str);
+    has orig => ( is => 'rw', isa => Str );
+
+    has orig_name => ( is => 'rw', isa => Str );
 
 =attr heap is: rw, isa: Any, default: {}, lazy: yes  
 
@@ -642,6 +644,9 @@ is executed.
         $self->orig($orig);
 
         my $meta = $self->meta();
+
+        $self->orig_name($meta->name);
+
         my $anon = Moose::Meta::Class->create_anon_class
         (   
             superclasses => [ $meta->superclasses() ],
