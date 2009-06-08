@@ -664,6 +664,16 @@ is executed.
             *{$anon->name . "::()"} = sub {};
         }
 
+        # need to copy all of the symbols over
+        my $symbols = $meta->get_all_package_symbols('CODE');
+        foreach my $key (keys %$symbols)
+        {
+            if(!$anon->has_package_symbol("&$key"))
+            {
+                $anon->add_package_symbol("&$key", $symbols->{$key});
+            }
+        }
+
         # this bless not only reblesses into the anonymous class, but also activates overload
         bless($self, $anon->name);
 
