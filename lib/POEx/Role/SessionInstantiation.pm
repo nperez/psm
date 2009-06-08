@@ -390,7 +390,7 @@ their parent has changes. See POE::Kernel for more details on this event.
 
 =cut
 
-    method _parent(Session|DoesSessionInstantiation $previous_parent, Session|DoesSessionInstantiation $new_parent) is Event
+    method _parent(Session|DoesSessionInstantiation|Kernel $previous_parent, Session|DoesSessionInstantiation|Kernel $new_parent) is Event
     {
         1;
     }
@@ -446,7 +446,6 @@ is executed.
             }
             elsif(!$method->meta->isa('Moose::Meta::Class') || !$method->meta->does_role('POEx::Role::Event'))
             {
-                warn $method->meta->dump(2);
                 POE::Kernel::_warn($self->ID, " -> $state, called from $file at $line, exists, but is not marked as an available event");
                 return;
             }
@@ -671,12 +670,17 @@ is executed.
             my $symbols = $meta->get_all_package_symbols($type);
             foreach my $key (keys %$symbols)
             {
-                warn "SYMBOL NAME: $key";
                 if(!$anon->has_package_symbol($stuff->{$type} . $key))
                 {
-                    warn "ADD SYMBOL: $key";
-                    warn 'VALUE: ' . $symbols->{$key};
-                    $anon->add_package_symbol($stuff->{$type} . $key, ${$symbols->{$key}});
+                    if($type eq 'SCALAR')
+                    {
+                        $anon->add_package_symbol($stuff->{$type} . $key, ${$symbols->{$key}});
+                    }
+                    else
+                    {
+                        $anon->add_package_symbol($stuff->{$type} . $key, $symbols->{$key});
+                    }
+
                 }
             }
         }
