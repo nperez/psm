@@ -4,10 +4,11 @@ use MooseX::Declare;
 
 my $test = 0;
 
-class My::Session with POEx::Role::SessionInstantiation
+class My::Session
 {
     use 5.010;
     use aliased 'POEx::Role::Event';
+    with 'POEx::Role::SessionInstantiation';
 
     method _stop is Event
     {
@@ -32,8 +33,9 @@ class My::Session with POEx::Role::SessionInstantiation
                 {
                     Test::More::pass('bar called');
                     
-                    class Foo with POEx::Role::SessionInstantiation 
+                    class Foo  
                     { 
+                        with 'POEx::Role::SessionInstantiation';
                         use aliased 'POEx::Role::Event'; 
                         after _start is Event 
                         { 
@@ -48,8 +50,9 @@ class My::Session with POEx::Role::SessionInstantiation
                     Foo->new( options => { 'trace' => 1 }, alias => 'blat_alias' );
                     $self->post('blat_alias', 'blat');
                     
-                    class Bar with POEx::Role::SessionInstantiation 
+                    class Bar 
                     { 
+                        with 'POEx::Role::SessionInstantiation';
                         use aliased 'POEx::Role::Event'; 
                         method flarg is Event 
                         { 

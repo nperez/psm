@@ -6,6 +6,8 @@ Revision history for {{ $dist->name }} {{ $dist->version }}
         Redo dist using Dist::Zilla
         Redo POD to use PodPurler
         Advice now works on methods declared as events
+        Reworked docs/code to use immediate 'with' usage
+        removed 'use signatures;'
 
 0.01    2009-05-05
         Initial release

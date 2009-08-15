@@ -10,9 +10,10 @@ use MooseX::Declare;
     use 5.010;
     use MooseX::Declare;
 
-    # using the role instantly makes it a POE::Session upon instantiation
-    class My::Class with POEx::Role::SessionInstantiation
+    class My::Class 
     {
+        # using the role instantly makes it a POE::Session upon instantiation
+        with 'POEx::Role::SessionInstantiation';
         # alias the decorator
         use aliased 'POEx::Role::Event';
 
@@ -64,7 +65,6 @@ role POEx::Role::SessionInstantiation
     use MooseX::Types::Moose('Str', 'Int', 'Any', 'HashRef', 'Object', 'ArrayRef', 'Maybe');
     use POEx::Types(':all');
     use Moose::Util::TypeConstraints;
-    use signatures;
     use POE;
 
     use aliased 'POEx::Role::Event', 'Event';
@@ -263,11 +263,11 @@ never get registered with POE.
     (
         is => 'rw',
         isa => Str,
-        trigger => sub ($self, $val)
+        trigger => sub
         { 
             # we need to check to make sure we are currently in a POE context
-            return if not defined($self->poe->kernel);
-            $POE::Kernel::poe_kernel->alias_set($val); 
+            return if not defined($_[0]->poe->kernel);
+            $POE::Kernel::poe_kernel->alias_set($_[1]); 
         },
         clearer => '_clear_alias',
     );
@@ -285,7 +285,7 @@ alias, by other Sessions for addressing events sent through POE to your object.
     (
         is => 'ro',
         isa => Int,
-        default => sub ($self) { $POE::Kernel::poe_kernel->ID_session_to_id($self) },
+        default => sub { $POE::Kernel::poe_kernel->ID_session_to_id($_[0]) },
         lazy => 1,
     );
 
