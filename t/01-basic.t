@@ -1,4 +1,4 @@
-use Test::More('tests', 13);
+use Test::More;
 use POE;
 use MooseX::Declare;
 
@@ -91,10 +91,12 @@ class My::Session
     {
         if($self->poe->state eq 'foo')
         {
+            $test++;
             Test::More::pass('default redirect foo');
         } 
         elsif( $self->poe->state eq 'bar') 
         { 
+            $test++;
             Test::More::pass('default redirect bar');
         }
     }
@@ -104,5 +106,6 @@ my $sess = My::Session->new( options => { 'trace' => 1 }, args => [ 'test0' ]);
 my $sess2 = My::Session->new( options => { 'trace' => 1 }, args => [ 'test1' ]);
 
 POE::Kernel->run();
-
+is($test, 4, 'defaults both executed');
+done_testing();
 1;
