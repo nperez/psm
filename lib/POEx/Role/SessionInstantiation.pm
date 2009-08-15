@@ -1,5 +1,4 @@
 package POEx::Role::SessionInstantiation;
-use 5.010;
 use MooseX::Declare;
 
 #ABSTRACT: A Moose Role for turning objects into POE Sessions
@@ -59,6 +58,9 @@ use MooseX::Declare;
     POE::Kernel->run();
 
 =cut
+
+#lexical hack to get a static variable
+my $anonymous_poe;
 
 role POEx::Role::SessionInstantiation
 {
@@ -188,45 +190,48 @@ This will clone the current anonymous poe object and return it.
 
     sub _build_poe
     {
-        state $poe_class = class 
+        if(!defined $anonymous_poe)
         {
-            use POEx::Types(':all');
-            use MooseX::Types::Moose('Maybe', 'Str');
-
-            has sender  => ( is => 'rw', isa => Kernel|Session|DoesSessionInstantiation, clearer => 'clear_sender'  );
-            has state   => ( is => 'rw', isa => Str, clearer => 'clear_state' );
-            has file    => ( is => 'rw', isa => Maybe[Str], clearer => 'clear_file' );
-            has line    => ( is => 'rw', isa => Maybe[Str], clearer => 'clear_line' );
-            has from    => ( is => 'rw', isa => Maybe[Str], clearer => 'clear_from' );
-            has kernel  => ( is => 'rw', isa => Kernel, clearer => 'clear_kernel' );
-
-            method clear
+            $anonymous_poe = class 
             {
-                $self->clear_sender;
-                $self->clear_state;
-                $self->clear_file;
-                $self->clear_line;
-                $self->clear_from;
-                $self->clear_kernel;
-            }
+                use POEx::Types(':all');
+                use MooseX::Types::Moose('Maybe', 'Str');
 
-            method restore (Object $poe)
-            {
-                $self->sender($poe->sender);
-                $self->state($poe->state);
-                $self->file($poe->file);
-                $self->line($poe->line);
-                $self->from($poe->from);
-                $self->kernel($poe->kernel);
-            }
+                has sender  => ( is => 'rw', isa => Kernel|Session|DoesSessionInstantiation, clearer => 'clear_sender'  );
+                has state   => ( is => 'rw', isa => Str, clearer => 'clear_state' );
+                has file    => ( is => 'rw', isa => Maybe[Str], clearer => 'clear_file' );
+                has line    => ( is => 'rw', isa => Maybe[Str], clearer => 'clear_line' );
+                has from    => ( is => 'rw', isa => Maybe[Str], clearer => 'clear_from' );
+                has kernel  => ( is => 'rw', isa => Kernel, clearer => 'clear_kernel' );
 
-            method clone
-            {
-                return $self->meta->clone_object($self);
-            }
-        };
+                method clear
+                {
+                    $self->clear_sender;
+                    $self->clear_state;
+                    $self->clear_file;
+                    $self->clear_line;
+                    $self->clear_from;
+                    $self->clear_kernel;
+                }
 
-        return $poe_class->name->new();
+                method restore (Object $poe)
+                {
+                    $self->sender($poe->sender);
+                    $self->state($poe->state);
+                    $self->file($poe->file);
+                    $self->line($poe->line);
+                    $self->from($poe->from);
+                    $self->kernel($poe->kernel);
+                }
+
+                method clone
+                {
+                    return $self->meta->clone_object($self);
+                }
+            };
+        }
+        
+        return $anonymous_poe->name->new();
     }
 
 =attr args is: rw, isa: ArrayRef, default: [], lazy: yes
@@ -365,7 +370,7 @@ single ArrayRef
 
     method _default(ArrayRef $args?) is Event
     {
-        my $string = $self->alias // $self->ID;
+        my $string = defined($self->alias) ? $self->alias : $self->ID;
         my $state = $self->poe->state;
         warn "Nonexistent '$state' event delivered to $string";
     }
@@ -516,7 +521,7 @@ is executed.
             }
             else
             {
-                my $loggable_self = $self->alias // $self->ID;
+                my $loggable_self = defined($self->alias) ? $self->alias : $self->ID;
                 POE::Kernel::_warn
                 (
                     "a '$state' event was sent from $file at $line to $loggable_self ",

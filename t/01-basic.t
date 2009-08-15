@@ -6,7 +6,6 @@ my $test = 0;
 
 class My::Session
 {
-    use 5.010;
     use aliased 'POEx::Role::Event';
     with 'POEx::Role::SessionInstantiation';
 
@@ -90,10 +89,13 @@ class My::Session
 
     method _default(@args) is Event
     {
-        given($self->poe->state)
+        if($self->poe->state eq 'foo')
         {
-            when('foo') { Test::More::pass('default redirect foo'); }
-            when('bar') { Test::More::pass('default redirect bar'); }
+            Test::More::pass('default redirect foo');
+        } 
+        elsif( $self->poe->state eq 'bar') 
+        { 
+            Test::More::pass('default redirect bar');
         }
     }
 }
