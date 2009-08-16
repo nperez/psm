@@ -8,6 +8,7 @@ Revision history for {{ $dist->name }} {{ $dist->version }}
         Advice now works on methods declared as events
         Reworked docs/code to use immediate 'with' usage
         removed 'use signatures;'
+        should be 5.8.X safe. We'll see after CPAN Testers gets a hold of it
 
 0.01    2009-05-05
         Initial release
