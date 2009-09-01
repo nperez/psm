@@ -1,6 +1,10 @@
-Revision history for {{ $dist->name }} {{ $dist->version }}
+Revision history for {{ $dist->name }}: {{ $dist->version }}
 
 {{ $NEXT }}
+        Depend on newer versions of dependencies
+        Switch from the long verbose type constraint aggregate to px-type defined shortcut
+
+0.092280  2009-08-16 21:06:53 UTC
         Redo tracing to now be a simple if statement before invocation
         Throw away method heuristics in exchange for declarative method traits
         Redo dist using Dist::Zilla

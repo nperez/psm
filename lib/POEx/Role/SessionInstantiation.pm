@@ -6,6 +6,7 @@ use MooseX::Declare;
 =head1 SYOPSIS
 
     package My::Class;
+    
     use 5.010;
     use MooseX::Declare;
 
@@ -306,7 +307,7 @@ These are provided as sugar for the respective POE::Kernel methods.
 
 =cut
     # add some sugar for posting, yielding, and calling events
-    method post(SessionAlias|SessionID|Session|DoesSessionInstantiation $session, Str $event_name, @args) 
+    method post(SessionRefIdAliasInstantiation $session, Str $event_name, @args) 
     {
         confess('No POE context') if not defined($self->poe->kernel);
         return $self->poe->kernel->post($session, $event_name, @args);
@@ -318,7 +319,7 @@ These are provided as sugar for the respective POE::Kernel methods.
         return $self->poe->kernel->yield($event_name, @args);
     }
 
-    method call(SessionAlias|SessionID|Session|DoesSessionInstantiation $session, Str $event_name, @args) 
+    method call(SessionRefIdAliasInstantiation $session, Str $event_name, @args) 
     {
         confess('No POE context') if not defined($self->poe->kernel);
         return $self->poe->kernel->call($session, $event_name, @args);
