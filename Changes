@@ -1,6 +1,9 @@
 Revision history for {{ $dist->name }}: {{ $dist->version }}
 
 {{ $NEXT }}
+        Depend on newer POEx::Types and let it set the POE version
+
+0.092440  2009-09-01 15:38:10 UTC
         Depend on newer versions of dependencies
         Switch from the long verbose type constraint aggregate to px-type defined shortcut
 
