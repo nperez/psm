@@ -1,6 +1,19 @@
-Revision history for {{ $dist->name }} {{ $dist->version }}
+Revision history for POEx-Role-SessionInstantiation: {{ $dist->version }}
 
 {{ $NEXT }}
+        Update deps
+        Major refactor of guts to break out functionality into different roles
+        Implement traits (even parameterized ones) via import
+        Misc doc fixes
+
+0.092460  2009-09-03 21:06:04 UTC
+        Depend on newer POEx::Types and let it set the POE version
+
+0.092440  2009-09-01 15:38:10 UTC
+        Depend on newer versions of dependencies
+        Switch from the long verbose type constraint aggregate to px-type defined shortcut
+
+0.092280  2009-08-16 21:06:53 UTC
         Redo tracing to now be a simple if statement before invocation
         Throw away method heuristics in exchange for declarative method traits
         Redo dist using Dist::Zilla
