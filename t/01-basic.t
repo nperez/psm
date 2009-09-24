@@ -42,7 +42,8 @@ class My::Session
                         } 
                         method blat is Event 
                         { 
-                            Test::More::pass('blat called'); 
+                            Test::More::pass('blat called');
+                            $self->clear_alias;
                         } 
                     }
 
@@ -55,7 +56,8 @@ class My::Session
                         use aliased 'POEx::Role::Event'; 
                         method flarg is Event 
                         { 
-                            Test::More::pass('flarg called'); 
+                            Test::More::pass('flarg called');
+                            $self->clear_alias;
                         } 
                         before _stop is Event
                         {
