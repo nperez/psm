@@ -66,16 +66,26 @@ going out of scope
         isa => 'Class::MOP::Class'
     );
     
-    sub BUILD { 1; }
+    sub BUILD { 1 }
 
 =method after BUILD
 
 All of the magic for turning the constructed object into a Session happens in 
 this method. If a BUILD is not provided, a stub exists to make sure this advice
-is executed.
+is executed. Internally, it delegates actual execution to _post_build to allow
+it to be advised.
 
 =cut
-    after BUILD
+    after BUILD { $self->_post_build() }
+
+=method _post_build
+
+_post_build does the magic of making sure our overload magic is activated and
+that we are registered with POE via $poe_kernel->session_alloc.
+
+=cut
+
+    method _post_build
     {
         #enable overload in the composed class (ripped from overload.pm)
         {
@@ -91,7 +101,7 @@ is executed.
         #this registers us with the POE::Kernel
         $POE::Kernel::poe_kernel->session_alloc($self, @{$self->args()})
             if not $self->orig;
-    };
+    }
 
 =method _clone_self
 
