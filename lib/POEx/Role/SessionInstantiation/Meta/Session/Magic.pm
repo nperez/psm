@@ -87,6 +87,18 @@ that we are registered with POE via $poe_kernel->session_alloc.
 
     method _post_build
     {
+        $self->_overload_magic();
+        $self->_poe_register();
+    }
+
+=method _overload_magic
+
+To active the overload magic, use this method. This is what _post_build uses.
+
+=cut
+
+    method _overload_magic
+    {
         #enable overload in the composed class (ripped from overload.pm)
         {
             no strict 'refs';
@@ -98,6 +110,17 @@ that we are registered with POE via $poe_kernel->session_alloc.
         # we need a no-op bless here to activate the magic for overload
         bless ({}, $self->meta->name);
         
+    }
+
+=method _poe_register
+
+To register this instance with POE, use this method. This is what _post_build
+uses.
+
+=cut
+
+    method _poe_register
+    {
         #this registers us with the POE::Kernel
         $POE::Kernel::poe_kernel->session_alloc($self, @{$self->args()})
             if not $self->orig;

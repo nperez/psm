@@ -67,6 +67,7 @@ class My::Session3
 }
 My::Session->new( options => { 'trace' => 1 } );
 My::Session2->new( options => { 'trace' => 1 } );
+My::Session3->new( options => { 'trace' => 1 } );
 
 POE::Kernel->run();
 done_testing();
