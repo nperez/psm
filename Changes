@@ -1,6 +1,12 @@
 Revision history for POEx-Role-SessionInstantiation: {{ $dist->version }}
 
 {{ $NEXT }}
+        Fix removing an alias when no alias set
+        Swtich trait behavior to MooseX::CompileTime::Traits
+        Adjust docs to reflect mx-ct-traits usage
+        Adjust traits test
+
+0.092673  2009-09-24 23:08:47 UTC
         Update deps
         Major refactor of guts to break out functionality into different roles
         Implement traits (even parameterized ones) via import
