@@ -59,39 +59,12 @@ use MooseX::Declare;
 
 =cut
 
-role POEx::Role::SessionInstantiation
+role POEx::Role::SessionInstantiation with MooseX::CompileTime::Traits
 {
-    use MooseX::Types::Moose(':all');
-    use MooseX::Types::Structured(':all');
-
-    use aliased 'POEx::Role::Event', 'Event';
-
     with 'POEx::Role::SessionInstantiation::Meta::Session::Magic';
     with 'POEx::Role::SessionInstantiation::Meta::Session::Implementation';
     with 'POEx::Role::SessionInstantiation::Meta::Session::Events';
     with 'POEx::Role::SessionInstantiation::Meta::Session::Sugar';
-
-    # enable traits via import
-    method import (ClassName $role: ArrayRef :$traits?)
-    {
-        if(defined($traits))
-        {
-            my $tc = Tuple[RoleName, Optional[HashRef]];
-            
-            unless($tc->validate($traits))
-            {
-                with $traits->[0], $traits->[1];
-                return;
-            }
-
-            foreach my $tuple (@$traits)
-            {
-                my $ret = $tc->validate($tuple);
-                die $ret if defined($ret);
-                with $tuple->[0] => $tuple->[1];
-            }
-        }
-    }
 }
 1;
 
@@ -232,27 +205,15 @@ Now let's use them
         
         # and now the magic
         use POEx::Role::SessionInstantiation 
-            traits => [ ['FrobAtStart'], ['SomeLogger' => { foo => 'log' } ] ];
+            traits => [ 'FrobAtStart', SomeLogger => { foo => 'log' } ];
         
         # compose it now that it has traits applied
         with 'POEx::Role::SessionInstantiation';
         ...
     }
 
-And here is the import method signature:
-
-    method import (RoleName $role: ArrayRef :$traits?)
-
-Where $traits is expected to contain a series of Tuples that look like:
-
-    Tuple[RoleName, Optional[HashRef]]
-
-And there is a special case for a single trait where $traits is the tuple that
-is defined above. So the use statement above, if there is a single trait,
-could have been written as:
-
-    use POEx::Role::SessionInstantiation
-        traits => [ 'MyTrait' => { key => $args } ];
+For more information on how this mechanism works, please see
+MooseX::CompileTime::Traits
 
 =head2 WRITING YOUR OWN TRAITS
 

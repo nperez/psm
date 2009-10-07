@@ -9,7 +9,7 @@ class My::Session
     use Test::More;
     use aliased 'POEx::Role::Event';
     use MyTrait;
-    use POEx::Role::SessionInstantiation(traits => [['MyTrait' => { attr => 'foo' }], ['MyTrait' => { attr => 'bar' }]]);
+    use POEx::Role::SessionInstantiation traits => [ MyTrait => { attr => 'foo' }, MyTrait => { attr => 'bar' } ];
     with 'POEx::Role::SessionInstantiation';
 
     method _stop is Event
@@ -30,7 +30,7 @@ class My::Session2
     use Test::More;
     use aliased 'POEx::Role::Event';
     use MyTrait;
-    use POEx::Role::SessionInstantiation(traits => [ 'MyTrait' => { attr => 'baz' } ]);
+    use POEx::Role::SessionInstantiation traits => [ 'MyTrait' => { attr => 'baz' } ];
     with 'POEx::Role::SessionInstantiation';
 
     method _stop is Event
@@ -50,7 +50,7 @@ class My::Session3
     use Test::More;
     use aliased 'POEx::Role::Event';
     use MyTrait;
-    use POEx::Role::SessionInstantiation(traits => [ ['MyTrait'], [ 'MyTrait' => { attr => 'zarg' } ] ]);
+    use POEx::Role::SessionInstantiation traits => [ 'MyTrait', MyTrait => { attr => 'zarg' } ];
     with 'POEx::Role::SessionInstantiation';
 
     method _stop is Event
