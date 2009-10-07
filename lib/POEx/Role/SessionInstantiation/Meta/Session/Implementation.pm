@@ -120,7 +120,7 @@ never get registered with POE.
     {
         # we need to check to make sure we are currently in a POE context
         return if not defined($self->poe->kernel);
-        $self->poe->kernel->alias_remove($self->alias());
+        $self->poe->kernel->alias_remove($self->alias()) if $self->alias;
         $self->_clear_alias();
     }
 
