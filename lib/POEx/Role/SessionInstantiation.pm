@@ -1,4 +1,4 @@
-{package POEx::Role::SessionInstantiation;}
+package POEx::Role::SessionInstantiation;
 use MooseX::Declare;
 
 #ABSTRACT: A Moose Role for turning objects into POE Sessions

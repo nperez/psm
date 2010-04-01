@@ -1,6 +1,9 @@
 Revision history for POEx-Role-SessionInstantiation: {{ $dist->version }}
 
-{{ $NEXT }}
+{{ $NEXT }} 
+        Extra scoping for package since it breaks dzil and everything seems to work now anyhow without it
+
+1.100910  2010-04-01 00:53:07 America/Chicago
         Revamp dist and docs to newest Dist::Zilla awesomeness
         Fix bitrot with regards to MooseX::Types::Structured::Optional vs. Maybe[Type]
 
