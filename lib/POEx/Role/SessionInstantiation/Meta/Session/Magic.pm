@@ -9,7 +9,7 @@ role POEx::Role::SessionInstantiation::Meta::Session::Magic
     use POE;
     use MooseX::Types::Moose(':all');
 
-=method overload "", !=, ==
+=method_private overload "", !=, ==
 
 Stringification, and numeric comparison are overriden so that we can fool POE
 into thinking that our inject reference is actually the same as the old 
@@ -36,7 +36,9 @@ provided arguments.
         return "$_[0]" eq "$_[1]";
     };
 
-=attr orig is: rw, isa: Str
+=attribute_private orig
+
+    is: rw, isa: Str
 
 orig stores the stringification of the original reference. This lets us
 fool POE into thinking that our new reference is the old reference.
@@ -45,7 +47,9 @@ fool POE into thinking that our new reference is the old reference.
 
     has orig => ( is => 'rw', isa => Str );
 
-=attr orig is: rw, isa: Str
+=attribute_private orig_name
+
+    is: rw, isa: Str
 
 This stores the original meta name that would otherwise be lost
 
@@ -53,7 +57,9 @@ This stores the original meta name that would otherwise be lost
 
     has orig_name => ( is => 'rw', isa => Str );
 
-=attr _self_meta is: rw, isa: Str
+=attribute_private _self_meta
+
+    is: rw, isa: Str
 
 This is where we store the newly created anonymous clone class to keep it from
 going out of scope
@@ -68,7 +74,7 @@ going out of scope
     
     sub BUILD { 1 }
 
-=method after BUILD
+=method_private after BUILD
 
 All of the magic for turning the constructed object into a Session happens in 
 this method. If a BUILD is not provided, a stub exists to make sure this advice
@@ -78,7 +84,7 @@ it to be advised.
 =cut
     after BUILD { $self->_post_build() }
 
-=method _post_build
+=method_private _post_build
 
 _post_build does the magic of making sure our overload magic is activated and
 that we are registered with POE via $poe_kernel->session_alloc.
@@ -91,7 +97,7 @@ that we are registered with POE via $poe_kernel->session_alloc.
         $self->_poe_register();
     }
 
-=method _overload_magic
+=method_private _overload_magic
 
 To active the overload magic, use this method. This is what _post_build uses.
 
@@ -112,7 +118,7 @@ To active the overload magic, use this method. This is what _post_build uses.
         
     }
 
-=method _poe_register
+=method_private _poe_register
 
 To register this instance with POE, use this method. This is what _post_build
 uses.
@@ -126,7 +132,7 @@ uses.
             if not $self->orig;
     }
 
-=method _clone_self
+=method_private _clone_self
 
 _clone_self does the initial anonymous class clone as needed to enable per
 instance modification via normal POE mechanisms.

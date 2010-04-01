@@ -17,7 +17,9 @@ role POEx::Role::SessionInstantiation::Meta::Session::Implementation
 
     requires '_clone_self';
 
-=attr heap is: rw, isa: Any, default: {}, lazy: yes  
+=attribute_protected heap
+
+    is: rw, isa: Any, default: {}, lazy: yes  
 
 A traditional POE::Session provides a set aside storage space for the session
 context and that space is provided via argument to event handlers. With this 
@@ -32,7 +34,9 @@ Role, your object gains its own heap storage via this attribute.
         lazy => 1,
     );
 
-=attr options is: rw, isa: HashRef, default: {}, lazy: yes
+=attribute_public options
+
+    is: rw, isa: HashRef, default: {}, lazy: yes
 
 In following the POE::Session API, sessions can take options that do various
 things related to tracing and debugging. By default, tracing => 1, will turn on
@@ -49,7 +53,9 @@ but more object level tracing maybe enabled in future versions.
         lazy => 1,
     );
 
-=attr poe is: ro, isa: POEx::Role::SessionInstantiation::Meta::POEState
+=attribute_protected poe
+
+    is: ro, isa: POEx::Role::SessionInstantiation::Meta::POEState
 
 The poe attribute provides runtime context for your object methods. It contains
 an POEState object with it's own attributes and methods. Runtime context is 
@@ -73,7 +79,9 @@ methods and attributes.
         return POEState->new();
     }
 
-=attr args is: rw, isa: ArrayRef, default: [], lazy: yes
+=attribute_public args
+
+    is: rw, isa: ArrayRef, default: [], lazy: yes
 
 POE::Session's constructor provides a mechanism for passing arguments that will
 end up as arguments to the _start event handler. This is the exact same thing.
@@ -88,7 +96,9 @@ end up as arguments to the _start event handler. This is the exact same thing.
         lazy => 1
     );
 
-=attr alias is: rw, isa: Str, clearer: clear_alias, trigger: registers alias
+=attribute_public alias
+
+    is: rw, isa: Str, clearer: clear_alias, trigger: registers alias
 
 This attribute controls your object's alias to POE. POE allows for more than
 one alias to be assigned to any given session, but this attribute only assumes
@@ -124,7 +134,9 @@ never get registered with POE.
         $self->_clear_alias();
     }
 
-=attr ID is: ro, isa: Int
+=attribute_public ID 
+
+    is: ro, isa: Int
 
 This attribute will return what your POE assigned Session ID is. Must only be
 accessed after your object has been fully built (ie. after any BUILD methods).
@@ -141,7 +153,9 @@ alias, by other Sessions for addressing events sent through POE to your object.
         lazy => 1,
     );
 
-=method _invoke_state(Kernel|Session|DoesSessionInstantiation $sender, Str $state, ArrayRef $etc, Str $file?, Int $line?, Str $from?)
+=method_private _invoke_state
+
+    (Kernel|Session|DoesSessionInstantiation $sender, Str $state, ArrayRef $etc, Maybe[Str] $file, Maybe[Int] $line, Maybe[Str] $from)
 
 _invoke_state is the dispatch method called by POE::Kernel to deliver events. 
 It will introspect via meta to find the $state given by the Kernel. If the
@@ -155,7 +169,7 @@ Otherwise, it will build a POEState object, and then execute the method passing
 
 =cut
 
-    method _invoke_state(Kernel|Session|DoesSessionInstantiation $sender, Str $state, ArrayRef $etc, Str $file?, Int $line?, Str $from?)
+    method _invoke_state(Kernel|Session|DoesSessionInstantiation $sender, Str $state, ArrayRef $etc, Maybe[Str] $file, Maybe[Int] $line, Maybe[Str] $from)
     {
         my $method = $self->meta->find_method_by_name($state) || $self->meta->find_method_by_name('_default');
 
@@ -225,7 +239,9 @@ Otherwise, it will build a POEState object, and then execute the method passing
         }
     }
 
-=method _register_state (Str $method_name, CodeRef|MooseX::Method::Signatures::Meta::Method $coderef?, Str $ignore?)
+=method_private _register_state
+    
+    (Str $method_name, Maybe[CodeRef|MooseX::Method::Signatures::Meta::Method] $coderef, Maybe[Str] $ignore)
 
 _register_state is called by the Kernel anytime an event is added to a session
 via POE::Kernel's state() method. This can happen from an arbitrary source or
@@ -236,7 +252,7 @@ Otherwise it expects fullblown methods that compose POEx::Role::Event.
 
 =cut
 
-    method _register_state (Str $method_name, CodeRef|MooseX::Method::Signatures::Meta::Method $coderef?, Str $ignore?)
+    method _register_state (Str $method_name, Maybe[CodeRef|MooseX::Method::Signatures::Meta::Method] $coderef, Maybe[Str] $ignore)
     {
         # per instance changes
         $self = $self->_clone_self();
@@ -302,7 +318,9 @@ Otherwise it expects fullblown methods that compose POEx::Role::Event.
         }
     }
 
-=method _wheel_wrap_method (CodeRef|MooseX::Method::Signatures::Meta::Method $ref)
+=method_private _wheel_wrap_method
+
+    (CodeRef|MooseX::Method::Signatures::Meta::Method $ref)
 
 _wheel_wrap_method is a private method that makes sure wheel states are called
 how they think they should be called. This allows proper interaction with the
@@ -344,7 +362,6 @@ default POE Wheel implementations.
             return $ref->(@args);
         }
     }
-    
 }
 
 1;

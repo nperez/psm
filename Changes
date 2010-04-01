@@ -1,6 +1,10 @@
 Revision history for POEx-Role-SessionInstantiation: {{ $dist->version }}
 
 {{ $NEXT }}
+        Revamp dist and docs to newest Dist::Zilla awesomeness
+        Fix bitrot with regards to MooseX::Types::Structured::Optional vs. Maybe[Type]
+
+0.092800  2009-10-07 20:31:26 UTC
         Fix removing an alias when no alias set
         Swtich trait behavior to MooseX::CompileTime::Traits
         Adjust docs to reflect mx-ct-traits usage

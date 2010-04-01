@@ -7,7 +7,7 @@ role POEx::Role::SessionInstantiation::Meta::Session::Sugar
 {
     use POEx::Types(':all');
 
-=method [qw/post yield call/]
+=method_public [qw/post yield call/]
 
 These are provided as sugar for the respective POE::Kernel methods.
 
