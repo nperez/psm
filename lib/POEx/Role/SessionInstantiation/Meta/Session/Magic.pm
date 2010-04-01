@@ -1,4 +1,4 @@
-{package POEx::Role::SessionInstantiation::Meta::Session::Magic;}
+package POEx::Role::SessionInstantiation::Meta::Session::Magic;
 
 use MooseX::Declare;
 

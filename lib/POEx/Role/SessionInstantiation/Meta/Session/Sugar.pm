@@ -1,7 +1,8 @@
-{package POEx::Role::SessionInstantiation::Meta::Session::Sugar;}
+package POEx::Role::SessionInstantiation::Meta::Session::Sugar;
 
 #ABSTRACT: Provides some convenience methods for some POE::Kernel methods
 
+use MooseX::Declare;
 
 role POEx::Role::SessionInstantiation::Meta::Session::Sugar
 {

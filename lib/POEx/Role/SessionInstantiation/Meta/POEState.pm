@@ -1,4 +1,4 @@
-{package POEx::Role::SessionInstantiation::Meta::POEState;}
+package POEx::Role::SessionInstantiation::Meta::POEState;
 
 use MooseX::Declare;
 

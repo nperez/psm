@@ -1,4 +1,4 @@
-{package POEx::Role::SessionInstantiation::Meta::Session::Events;}
+package POEx::Role::SessionInstantiation::Meta::Session::Events;
 
 #ABSTRACT: Provides default events such as _start, _stop, etc
 

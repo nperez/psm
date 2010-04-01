@@ -1,6 +1,9 @@
 Revision history for POEx-Role-SessionInstantiation: {{ $dist->version }}
 
-{{ $NEXT }} 
+{{ $NEXT }}
+        Make that all of the packages...
+
+1.100911  2010-04-01 01:44:25 America/Chicago 
         Extra scoping for package since it breaks dzil and everything seems to work now anyhow without it
 
 1.100910  2010-04-01 00:53:07 America/Chicago

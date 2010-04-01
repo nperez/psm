@@ -1,4 +1,4 @@
-{package POEx::Role::SessionInstantiation::Meta::Session::Implementation;}
+package POEx::Role::SessionInstantiation::Meta::Session::Implementation;
 
 #ABSTRACT: Provides actual POE::Session implementation
 
