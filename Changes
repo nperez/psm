@@ -1,6 +1,8 @@
 Revision history for POEx-Role-SessionInstantiation: {{ $dist->version }}
 
 {{ $NEXT }}
+
+1.100912  2010-04-01 01:52:51 America/Chicago
         Make that all of the packages...
 
 1.100911  2010-04-01 01:44:25 America/Chicago 
