@@ -1,6 +1,8 @@
 Revision history for POEx-Role-SessionInstantiation: {{ $dist->version }}
 
 {{ $NEXT }}
+
+1.101040  2010-04-14 10:17:12 America/Chicago
         Make sure we add the consuming class to the super classes for anonymous clone
 
 1.100920  2010-04-01 23:51:13 America/Chicago
