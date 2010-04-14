@@ -157,7 +157,7 @@ instance modification via normal POE mechanisms.
 
         my $anon = Moose::Meta::Class->create_anon_class
         (   
-            superclasses => [ $meta->superclasses() ],
+            superclasses => [ $meta->superclasses(), $meta->name ],
             methods => { map { $_->name,  $_  } $meta->get_all_methods },
             attributes => [ $meta->get_all_attributes() ],
         );

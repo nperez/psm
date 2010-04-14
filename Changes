@@ -1,6 +1,10 @@
 Revision history for POEx-Role-SessionInstantiation: {{ $dist->version }}
 
 {{ $NEXT }}
+        Make sure we add the consuming class to the super classes for anonymous clone
+
+1.100920  2010-04-01 23:51:13 America/Chicago
+        AutoPrereq didn't find MooseX::CompileTime::Traits
 
 1.100912  2010-04-01 01:52:51 America/Chicago
         Make that all of the packages...
